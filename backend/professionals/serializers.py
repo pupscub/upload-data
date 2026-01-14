@@ -56,6 +56,7 @@ class ProfessionalSerializer(serializers.ModelSerializer):
     def validate_phone(self, value):
         """
         Validate phone format and uniqueness.
+        Normalizes phone to E.164 format.
         Returns None for empty values to allow proper uniqueness handling.
         """
         # Convert empty string to None
@@ -64,20 +65,37 @@ class ProfessionalSerializer(serializers.ModelSerializer):
 
         value = value.strip()
 
-        # Validate E.164 format
-        if not re.match(r"^\+?1?\d{9,15}$", value):
+        # Remove all non-digit characters except leading +
+        if value.startswith("+"):
+            digits = "+" + re.sub(r"\D", "", value[1:])
+        else:
+            digits = re.sub(r"\D", "", value)
+
+        # Normalize to E.164 format
+        # If it's a 10-digit US number, add +1
+        if len(digits) == 10:
+            digits = "+1" + digits
+        # If it's 11 digits starting with 1, add +
+        elif len(digits) == 11 and digits.startswith("1"):
+            digits = "+" + digits
+        # If it doesn't start with +, add it
+        elif not digits.startswith("+"):
+            digits = "+" + digits
+
+        # Validate E.164 format (+ followed by 10-15 digits)
+        if not re.match(r"^\+\d{10,15}$", digits):
             raise serializers.ValidationError(
                 "Phone must be in E.164 format (e.g., +14155551234)"
             )
 
         # Check uniqueness (exclude current instance on update)
-        queryset = Professional.objects.filter(phone=value)
+        queryset = Professional.objects.filter(phone=digits)
         if self.instance:
             queryset = queryset.exclude(pk=self.instance.pk)
         if queryset.exists():
             raise serializers.ValidationError("Phone number already exists.")
 
-        return value
+        return digits
 
     def validate_email(self, value):
         """

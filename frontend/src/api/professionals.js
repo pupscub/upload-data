@@ -144,6 +144,61 @@ function formatErrors(errors) {
 }
 
 /**
+ * Delete a single professional by ID.
+ * @param {number} id - Professional ID
+ * @returns {Promise<void>}
+ */
+export async function deleteProfessional(id) {
+  const response = await fetch(`${API_BASE_URL}/${id}/`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok && response.status !== 204) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to delete professional');
+  }
+}
+
+/**
+ * Bulk delete professionals by IDs.
+ * @param {Array<number>} ids - Array of professional IDs
+ * @returns {Promise<Object>} Result with deleted count and not_found IDs
+ */
+export async function bulkDeleteProfessionals(ids) {
+  const response = await fetch(`${API_BASE_URL}/bulk-delete/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ ids }),
+  });
+  
+  const result = await response.json();
+  
+  if (!response.ok) {
+    throw new Error(result.error || 'Bulk delete failed');
+  }
+  
+  return result;
+}
+
+/**
+ * Get CSV export URL with optional filters.
+ * @param {Object} options - Filter options
+ * @param {string|null} options.source - Optional source filter
+ * @param {string|null} options.search - Optional search query
+ * @returns {string} URL for CSV download
+ */
+export function getExportCSVUrl({ source = null, search = null } = {}) {
+  const params = new URLSearchParams();
+  if (source) params.append('source', source);
+  if (search) params.append('search', search);
+  
+  const queryString = params.toString();
+  return queryString ? `${API_BASE_URL}/export-csv/?${queryString}` : `${API_BASE_URL}/export-csv/`;
+}
+
+/**
  * Parse CSV text into array of professional objects.
  * @param {string} csvText - CSV text content
  * @returns {Array} Array of professional objects
