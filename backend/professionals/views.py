@@ -175,6 +175,38 @@ def process_single_professional(item, index, request):
         return {"index": index, "success": False, "error": serializer.errors}
 
 
+def normalize_phone(phone):
+    """
+    Normalize phone number to E.164 format for consistent comparison.
+    Returns None for empty values.
+    """
+    import re
+
+    if not phone or phone.strip() == "":
+        return None
+
+    phone = phone.strip()
+
+    # Remove all non-digit characters except leading +
+    if phone.startswith("+"):
+        digits = "+" + re.sub(r"\D", "", phone[1:])
+    else:
+        digits = re.sub(r"\D", "", phone)
+
+    # Normalize to E.164 format
+    # If it's a 10-digit US number, add +1
+    if len(digits) == 10:
+        digits = "+1" + digits
+    # If it's 11 digits starting with 1, add +
+    elif len(digits) == 11 and digits.startswith("1"):
+        digits = "+" + digits
+    # If it doesn't start with +, add it
+    elif not digits.startswith("+"):
+        digits = "+" + digits
+
+    return digits
+
+
 def find_existing_professional(item):
     """
     Find existing professional by email (primary) or phone (fallback).
@@ -192,11 +224,139 @@ def find_existing_professional(item):
 
     # Fallback to phone if provided and no email match
     if phone and phone.strip():
-        match = Professional.objects.filter(phone=phone.strip()).first()
-        if match:
-            return match
+        # Normalize phone before searching to match stored E.164 format
+        normalized_phone = normalize_phone(phone)
+        if normalized_phone:
+            match = Professional.objects.filter(phone=normalized_phone).first()
+            if match:
+                return match
 
     return None
+
+
+@api_view(["DELETE"])
+def professional_delete(request, pk):
+    """
+    Delete a single professional by ID.
+    """
+    try:
+        professional = Professional.objects.get(pk=pk)
+        professional.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except Professional.DoesNotExist:
+        return Response(
+            {"error": "Professional not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+
+@api_view(["POST"])
+def professional_bulk_delete(request):
+    """
+    Bulk delete professionals by IDs.
+
+    Request body: {"ids": [1, 2, 3]}
+
+    Response:
+    {
+        "deleted": 3,
+        "not_found": []
+    }
+    """
+    ids = request.data.get("ids", [])
+
+    if not ids:
+        return Response(
+            {"error": "No IDs provided"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not isinstance(ids, list):
+        return Response(
+            {"error": "IDs must be a list"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Find existing professionals
+    existing = Professional.objects.filter(pk__in=ids)
+    existing_ids = set(existing.values_list("pk", flat=True))
+    not_found = [id for id in ids if id not in existing_ids]
+
+    # Delete the ones that exist
+    deleted_count = existing.delete()[0]
+
+    return Response(
+        {
+            "deleted": deleted_count,
+            "not_found": not_found,
+        }
+    )
+
+
+@api_view(["GET"])
+def professional_export_csv(request):
+    """
+    Export professionals as CSV.
+    Supports same filters as list endpoint (source, search).
+    """
+    import csv
+    from django.http import HttpResponse
+
+    queryset = Professional.objects.all()
+
+    # Apply source filter if provided
+    source = request.query_params.get("source")
+    if source:
+        valid_sources = ["direct", "partner", "internal"]
+        if source in valid_sources:
+            queryset = queryset.filter(source=source)
+
+    # Apply search filter if provided
+    search = request.query_params.get("search")
+    if search:
+        search = search.strip()
+        queryset = queryset.filter(
+            Q(first_name__icontains=search)
+            | Q(last_name__icontains=search)
+            | Q(email__icontains=search)
+            | Q(phone__icontains=search)
+        )
+
+    # Create CSV response
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="professionals.csv"'
+
+    writer = csv.writer(response)
+    # Write header
+    writer.writerow(
+        [
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "source",
+            "company_name",
+            "job_title",
+            "created_at",
+        ]
+    )
+
+    # Write data rows
+    for p in queryset:
+        writer.writerow(
+            [
+                p.first_name,
+                p.last_name,
+                p.email,
+                p.phone or "",
+                p.source,
+                p.company_name or "",
+                p.job_title or "",
+                p.created_at.isoformat() if p.created_at else "",
+            ]
+        )
+
+    return response
 
 
 @api_view(["POST"])
