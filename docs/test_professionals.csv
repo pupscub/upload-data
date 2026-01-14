@@ -1,0 +1,16 @@
+first_name,last_name,email,phone,source,company_name,job_title
+John,Smith,john.smith@techcorp.com,+14155551001,direct,TechCorp Inc,Software Engineer
+Sarah,Johnson,sarah.j@innovate.io,+14155551002,partner,Innovate Labs,Product Manager
+Michael,Chen,m.chen@datawise.com,+14155551003,internal,DataWise Analytics,Data Scientist
+Emily,Williams,emily.w@cloudbase.net,+14155551004,direct,CloudBase Solutions,DevOps Engineer
+David,Brown,david.brown@fintech.co,+14155551005,partner,FinTech Partners,Financial Analyst
+Jessica,Garcia,jgarcia@healthplus.org,+14155551006,internal,HealthPlus Medical,Healthcare Consultant
+Robert,Martinez,r.martinez@greenergy.com,+14155551007,direct,GreenErgy Corp,Sustainability Director
+Amanda,Lee,amanda.lee@aiventures.io,+14155551008,partner,AI Ventures,Machine Learning Engineer
+Christopher,Taylor,ctaylor@legaledge.com,+14155551009,internal,LegalEdge LLP,Corporate Attorney
+Michelle,Anderson,m.anderson@retailmax.com,+14155551010,direct,RetailMax,Marketing Director
+James,Thomas,james.t@cybershield.net,+14155551011,partner,CyberShield Security,Security Analyst
+Rachel,Jackson,rachel.j@edutech.edu,+14155551012,internal,EduTech Solutions,Education Specialist
+Daniel,White,d.white@biomedic.com,+14155551013,direct,BioMedic Research,Research Scientist
+Stephanie,Harris,sharris@mediaflow.tv,+14155551014,partner,MediaFlow Studios,Content Strategist
+Kevin,Martin,kevin.m@logisticspro.com,+14155551015,internal,LogisticsPro,Supply Chain Manager

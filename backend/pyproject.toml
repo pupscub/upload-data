@@ -1,0 +1,26 @@
+[project]
+name = "newtonx-backend"
+version = "0.1.0"
+description = "Professional sign-up management API"
+requires-python = ">=3.10"
+dependencies = [
+    "django>=4.2",
+    "djangorestframework>=3.14",
+    "django-cors-headers>=4.3",
+    "pdfplumber>=0.10",
+    "openai>=1.0",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-django>=4.5",
+]
+
+[tool.setuptools]
+packages = []
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py"]
