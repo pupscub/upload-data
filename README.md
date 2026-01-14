@@ -37,10 +37,11 @@ A full-stack application for managing professional sign-ups from multiple source
 ```bash
 cd backend
 
-# Create virtual environment and install dependencies with UV
-uv venv
+# Install dependencies with UV (creates venv automatically)
+uv sync
+
+# Activate virtual environment
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install django djangorestframework django-cors-headers pdfplumber openai python-dotenv
 
 # Set up environment variables (optional - for LLM extraction)
 cp .env.sample .env
